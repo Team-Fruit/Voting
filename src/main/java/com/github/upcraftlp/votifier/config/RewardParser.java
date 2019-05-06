@@ -1,5 +1,14 @@
 package com.github.upcraftlp.votifier.config;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Locale;
+import java.util.function.Supplier;
+
+import org.apache.commons.io.FileUtils;
+
 import com.github.upcraftlp.votifier.ForgeVotifier;
 import com.github.upcraftlp.votifier.api.RewardCreatedEvent;
 import com.github.upcraftlp.votifier.api.reward.Reward;
@@ -11,19 +20,13 @@ import com.github.upcraftlp.votifier.reward.RewardThutBalance;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.NumberInvalidException;
 import net.minecraft.item.Item;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import org.apache.commons.io.FileUtils;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Locale;
 
 public class RewardParser {
 
@@ -63,7 +66,14 @@ public class RewardParser {
                             reward = new RewardChat(msgRaw, broadcast, parseAsTellraw);
                             break;
                         case "item":
-                            Item item = CommandBase.getItemByText(null, object.get("name").getAsString());
+                            String name = object.get("name").getAsString();
+                            Supplier<Item> item = ()->{
+                                try {
+                                    return CommandBase.getItemByText(null, name);
+                                } catch(NumberInvalidException e) {
+                                    throw new RuntimeException("Reward item is invalid.", e);
+                                }
+                            };
                             int count = object.has("count") ? object.get("count").getAsInt() : 1;
                             int meta = object.has("damage") ? object.get("damage").getAsInt() : 0;
                             String nbtRaw = object.has("nbt") ? object.get("nbt").getAsString() : null;
@@ -93,7 +103,7 @@ public class RewardParser {
                     }
                 }
             }
-            catch (FileNotFoundException | NumberInvalidException e) {
+            catch (FileNotFoundException e) {
                 ForgeVotifier.getLogger().error("error parsing reward file " + jsonFile.getName() + "!", e);
             }
             ForgeVotifier.getLogger().info("Votifier registered a total of {} rewards in {} files!", regCount, jsonFiles.length);
