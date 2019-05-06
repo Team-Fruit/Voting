@@ -1,6 +1,7 @@
 package com.github.upcraftlp.votifier.net;
 
 import com.github.upcraftlp.votifier.ForgeVotifier;
+import com.github.upcraftlp.votifier.api.VoteEvent;
 import com.github.upcraftlp.votifier.api.VoteReceivedEvent;
 import com.github.upcraftlp.votifier.api.reward.RewardStore;
 import com.github.upcraftlp.votifier.util.RSAUtil;
@@ -67,6 +68,7 @@ public class NetworkListenerThread extends Thread {
                                 FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() -> { //ensure we are not handling the event on the network thread
                                     ForgeVotifier.getLogger().info("[{}] received vote from {} (service: {})", timestamp, username, service);
                                     PlayerList playerList = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList();
+                                    MinecraftForge.EVENT_BUS.post(new VoteEvent(username, service, address, timestamp));
                                     EntityPlayerMP player = playerList.getPlayerByUsername(username);
                                     if(player != null) {
                                         MinecraftForge.EVENT_BUS.post(new VoteReceivedEvent(player, service, address, timestamp));

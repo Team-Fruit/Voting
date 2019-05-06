@@ -2,6 +2,7 @@ package com.github.upcraftlp.votifier.reward;
 
 import com.github.upcraftlp.votifier.api.RewardException;
 import com.github.upcraftlp.votifier.api.reward.Reward;
+
 import net.minecraft.command.CommandException;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -29,7 +30,7 @@ public class RewardChat extends Reward {
 
     @Override
     public void activate(MinecraftServer server, EntityPlayer player, String timestamp, String service, String address) throws RewardException {
-        String msg = replace(messageRaw, player, service);
+        String msg = replace(messageRaw, player.getName(), service);
         if(this.parseAsTellraw) {
             try {
                 ITextComponent textComponent = ITextComponent.Serializer.jsonToComponent(msg);
