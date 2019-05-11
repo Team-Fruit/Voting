@@ -1,17 +1,6 @@
 package com.github.upcraftlp.votifier.net;
 
-import com.github.upcraftlp.votifier.ForgeVotifier;
-import com.github.upcraftlp.votifier.api.VoteEvent;
-import com.github.upcraftlp.votifier.api.VoteReceivedEvent;
-import com.github.upcraftlp.votifier.api.reward.RewardStore;
-import com.github.upcraftlp.votifier.util.RSAUtil;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.server.management.PlayerList;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -19,6 +8,14 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+
+import com.github.upcraftlp.votifier.ForgeVotifier;
+import com.github.upcraftlp.votifier.api.Vote;
+import com.github.upcraftlp.votifier.api.VoteEvent;
+import com.github.upcraftlp.votifier.util.RSAUtil;
+
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class NetworkListenerThread extends Thread {
 
@@ -43,44 +40,32 @@ public class NetworkListenerThread extends Thread {
                         writer.write("FORGE VOTIFIER " + ForgeVotifier.VERSION + " on " + this.host + ":" + this.port);
                         writer.newLine();
                         writer.flush();
-                        byte[] bytes;
-                        {
-                            ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
-                            int nRead;
-                            byte[] readBuffer = new byte[8192];
-                            while((nRead = inputStream.read(readBuffer, 0, readBuffer.length)) != -1) {
-                                byteStream.write(readBuffer, 0, nRead);
-                            }
-                            bytes = byteStream.toByteArray();
-                            byteStream.close();
-                        }
-                        String[] lines = new String(RSAUtil.decrypt(bytes, RSAUtil.getKeyPair().getPrivate()), StandardCharsets.UTF_8).split("\n");
-                        if(lines.length < 4) {
-                            error(lines);
-                        }
-                        else {
-                            String opcode = lines[0].trim();
-                            if("VOTE".equals(opcode)) {
-                                String service = lines[1].trim();
-                                String username = lines[2].trim();
-                                String address = lines[3].trim();
-                                String timestamp = lines.length >= 5 ? lines[4].trim() : Long.toString(System.nanoTime() / 1_000_000L);
-                                FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() -> { //ensure we are not handling the event on the network thread
-                                    ForgeVotifier.getLogger().info("[{}] received vote from {} (service: {})", timestamp, username, service);
-                                    PlayerList playerList = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList();
-                                    MinecraftForge.EVENT_BUS.post(new VoteEvent(username, service, address, timestamp));
-                                    EntityPlayerMP player = playerList.getPlayerByUsername(username);
-                                    if(player != null) {
-                                        MinecraftForge.EVENT_BUS.post(new VoteReceivedEvent(player, service, address, timestamp));
-                                    }
-                                    else {
-                                        RewardStore.getStore().storePlayerReward(username, service, address, timestamp);
-                                    }
-                                });
-                            }
-                            else {
+                        byte[] bytes = new byte[256];
+                        int readable = inputStream.read(bytes, 0, bytes.length);
+                        if (readable == 256) {
+                            String[] lines = new String(RSAUtil.decrypt(bytes, RSAUtil.getKeyPair().getPrivate()), StandardCharsets.UTF_8).split("\n");
+                            if(lines.length < 4) {
                                 error(lines);
                             }
+                            else {
+                                String opcode = lines[0].trim();
+                                if("VOTE".equals(opcode)) {
+                                    String service = lines[1].trim();
+                                    String username = lines[2].trim();
+                                    String address = lines[3].trim();
+                                    String timestamp = lines.length >= 5 ? lines[4].trim() : Long.toString(System.nanoTime() / 1_000_000L);
+                                    FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() -> { //ensure we are not handling the event on the network thread
+                                        ForgeVotifier.getLogger().info("[{}] received vote from {} (service: {})", timestamp, username, service);
+                                        MinecraftForge.EVENT_BUS.post(new VoteEvent(new Vote(service, username, address, timestamp)));
+                                    });
+                                }
+                                else {
+                                    error(lines);
+                                }
+                            }
+                        }
+                        else {
+                            ForgeVotifier.getLogger().error("Unknown Packet Ignoring: "+readable);
                         }
                     }
                     catch (IOException e) {

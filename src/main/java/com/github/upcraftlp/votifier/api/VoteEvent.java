@@ -4,31 +4,13 @@ import net.minecraftforge.fml.common.eventhandler.Event;
 
 public class VoteEvent extends Event {
 
-	private final String username;
-    private final String service;
-    private final String address;
-    private final String timestamp;
+	private final Vote vote;
 
-    public VoteEvent(String username, String service, String address, String timestamp) {
-        this.username = username;
-        this.service = service;
-        this.address = address;
-        this.timestamp = timestamp;
-    }
+	public VoteEvent(final Vote vote) {
+		this.vote = vote;
+	}
 
-    public String getUsername() {
-        return username;
-    }
-
-    public String getTimestamp() {
-        return timestamp;
-    }
-
-    public String getServiceDescriptor() {
-        return service;
-    }
-
-    public String getRemoteAddress() {
-        return address;
-    }
+	public Vote getVote() {
+		return this.vote;
+	}
 }

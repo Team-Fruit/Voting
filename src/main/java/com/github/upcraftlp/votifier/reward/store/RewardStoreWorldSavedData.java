@@ -1,19 +1,27 @@
 package com.github.upcraftlp.votifier.reward.store;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import com.github.upcraftlp.votifier.ForgeVotifier;
-import com.github.upcraftlp.votifier.api.*;
+import com.github.upcraftlp.votifier.api.IRewardStore;
+import com.github.upcraftlp.votifier.api.Vote;
+import com.github.upcraftlp.votifier.api.VoteReceivedEvent;
 import com.github.upcraftlp.votifier.api.reward.StoredReward;
 import com.github.upcraftlp.votifier.config.VotifierConfig;
 import com.google.common.collect.Maps;
+
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.world.World;
-import net.minecraft.world.storage.*;
+import net.minecraft.world.storage.MapStorage;
+import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.common.FMLCommonHandler;
-
-import java.util.*;
 
 public class RewardStoreWorldSavedData extends WorldSavedData implements IRewardStore {
 
@@ -56,7 +64,7 @@ public class RewardStoreWorldSavedData extends WorldSavedData implements IReward
                 String service = rewardTag.getString("service");
                 String address = rewardTag.getString("address");
                 String timestamp = rewardTag.getString("timestamp");
-                rewards.add(new StoredReward(playerName, service, address, timestamp));
+                rewards.add(new StoredReward(new Vote(service, playerName, address, timestamp)));
             }
             STORED_REWARDS.put(playerName, rewards);
         }
@@ -75,9 +83,9 @@ public class RewardStoreWorldSavedData extends WorldSavedData implements IReward
             NBTTagList playerRewardList = new NBTTagList();
             for(StoredReward reward : rewards) {
                 NBTTagCompound rewardTag = new NBTTagCompound();
-                rewardTag.setString("service", reward.service);
-                rewardTag.setString("address", reward.address);
-                rewardTag.setString("timestamp", reward.timestamp);
+                rewardTag.setString("service", reward.vote.getServiceName());
+                rewardTag.setString("address", reward.vote.getAddress());
+                rewardTag.setString("timestamp", reward.vote.getTimeStamp());
                 playerRewardList.appendTag(rewardTag);
             }
             nbt.setTag("rewards", playerRewardList);
@@ -98,16 +106,16 @@ public class RewardStoreWorldSavedData extends WorldSavedData implements IReward
     }
 
     @Override
-    public void storePlayerReward(String name, String service, String address, String timestamp) {
+    public void storePlayerReward(Vote vote) {
         if(getMaxStoredRewards() == 0) {
             return; //do not store anything
         }
-        ForgeVotifier.getLogger().debug("cannot find player {}, assuming they're offline and storing reward.", name);
-        List<StoredReward> rewards = getRewardsForPlayer(name);
+        ForgeVotifier.getLogger().debug("cannot find player {}, assuming they're offline and storing reward.", vote.getUsername());
+        List<StoredReward> rewards = getRewardsForPlayer(vote.getUsername());
         while(rewards.size() > getMaxStoredRewards()) {
             rewards.remove(0); //discard old rewards
         }
-        rewards.add(new StoredReward(name, service, address, timestamp));
+        rewards.add(new StoredReward(vote));
         this.markDirty();
     }
 
@@ -118,7 +126,7 @@ public class RewardStoreWorldSavedData extends WorldSavedData implements IReward
         if(player != null) {
             for(int i = 0; i < Math.min(getMaxStoredRewards(), rewards.size()); i++) {
                 StoredReward reward = rewards.get(i);
-                MinecraftForge.EVENT_BUS.post(new VoteReceivedEvent(player, reward.service, reward.address, reward.timestamp));
+                MinecraftForge.EVENT_BUS.post(new VoteReceivedEvent(player, reward.vote));
             }
         }
         ForgeVotifier.getLogger().debug("player {} claimed their {} outstanding rewards", name, rewards.size());

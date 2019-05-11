@@ -6,7 +6,7 @@ public interface IRewardStore {
 
     int getMaxStoredRewards();
 
-    void storePlayerReward(String name, String service, String address, String timestamp);
+    void storePlayerReward(Vote vote);
 
     void claimRewards(String name);
 }

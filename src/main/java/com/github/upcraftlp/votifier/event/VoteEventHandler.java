@@ -16,10 +16,12 @@ import com.github.upcraftlp.votifier.util.ModUpdateHandler;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.management.PlayerList;
 import net.minecraft.util.StringUtils;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.common.ForgeVersion;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -39,7 +41,7 @@ public class VoteEventHandler {
         while(iterator.hasNext()) {
             Reward reward = iterator.next();
             try {
-                reward.activate(server, event.getEntityPlayer(), event.getTimestamp(), event.getServiceDescriptor(), event.getRemoteAddress());
+                reward.activate(server, event.getEntityPlayer(), event.getVote().getTimeStamp(), event.getVote().getServiceName(), event.getVote().getAddress());
             }
             catch (RewardException e) {
                 ForgeVotifier.getLogger().error("Error executing votifier reward, removing reward from reward list!", e);
@@ -58,7 +60,16 @@ public class VoteEventHandler {
         if (!StringUtils.isNullOrEmpty(VotifierConfig.voteMessage))
             for(EntityPlayerMP playerMP : server.getPlayerList().getPlayers())
             	playerMP.sendMessage(ITextComponent.Serializer.jsonToComponent(
-                    Reward.replace(VotifierConfig.voteMessage, event.getUsername(), event.getServiceDescriptor())));
+                    Reward.replace(VotifierConfig.voteMessage, event.getVote().getUsername(), event.getVote().getServiceName())));
+
+        PlayerList playerList = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList();
+        EntityPlayerMP player = playerList.getPlayerByUsername(event.getVote().getUsername());
+        if(player != null) {
+            MinecraftForge.EVENT_BUS.post(new VoteReceivedEvent(player, event.getVote()));
+        }
+        else {
+            RewardStore.getStore().storePlayerReward(event.getVote());
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)

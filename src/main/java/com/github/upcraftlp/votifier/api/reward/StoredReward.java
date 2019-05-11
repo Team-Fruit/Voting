@@ -1,13 +1,12 @@
 package com.github.upcraftlp.votifier.api.reward;
 
+import com.github.upcraftlp.votifier.api.Vote;
+
 public class StoredReward {
 
-    public final String username, service, address, timestamp;
+    public final Vote vote;
 
-    public StoredReward(String username, String service, String address, String timestamp) {
-        this.username = username;
-        this.service = service;
-        this.address = address;
-        this.timestamp = timestamp;
+    public StoredReward(Vote vote) {
+        this.vote = vote;
     }
 }

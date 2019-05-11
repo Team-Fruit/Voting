@@ -1,6 +1,7 @@
 package com.github.upcraftlp.votifier.command;
 
 import com.github.upcraftlp.votifier.ForgeVotifier;
+import com.github.upcraftlp.votifier.api.Vote;
 import com.github.upcraftlp.votifier.api.VoteEvent;
 import com.github.upcraftlp.votifier.api.VoteReceivedEvent;
 import com.github.upcraftlp.votifier.api.reward.RewardStore;
@@ -38,13 +39,14 @@ public class CommandVoteGive extends CommandBase {
 
         ForgeVotifier.getLogger().info("[{}] received test vote from {} (service: {})", timestamp, username, service);
         PlayerList playerList = FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList();
-        MinecraftForge.EVENT_BUS.post(new VoteEvent(username, service, address, timestamp));
+        Vote vote = new Vote(service, username, address, timestamp);
+        MinecraftForge.EVENT_BUS.post(new VoteEvent(vote));
         EntityPlayerMP player = playerList.getPlayerByUsername(username);
         if(player != null) {
-            MinecraftForge.EVENT_BUS.post(new VoteReceivedEvent(player, service, address, timestamp));
+            MinecraftForge.EVENT_BUS.post(new VoteReceivedEvent(player, vote));
         }
         else {
-            RewardStore.getStore().storePlayerReward(username, service, address, timestamp);
+            RewardStore.getStore().storePlayerReward(vote);
         }
     }
 }

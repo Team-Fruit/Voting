@@ -5,26 +5,14 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 
 public class VoteReceivedEvent extends PlayerEvent {
 
-    private final String service;
-    private final String address;
-    private final String timestamp;
+	private final Vote vote;
 
-    public VoteReceivedEvent(EntityPlayerMP player, String service, String address, String timestamp) {
-        super(player);
-        this.service = service;
-        this.address = address;
-        this.timestamp = timestamp;
-    }
+	public VoteReceivedEvent(EntityPlayerMP player, Vote vote) {
+		super(player);
+		this.vote = vote;
+	}
 
-    public String getTimestamp() {
-        return timestamp;
-    }
-
-    public String getServiceDescriptor() {
-        return service;
-    }
-
-    public String getRemoteAddress() {
-        return address;
-    }
+	public Vote getVote() {
+		return this.vote;
+	}
 }
