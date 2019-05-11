@@ -13,7 +13,7 @@ public class VotifierGreetingHandler
 	public void channelActive(ChannelHandlerContext ctx)
 			throws Exception {
 		VotifierSession session = (VotifierSession) ctx.channel().attr(VotifierSession.KEY).get();
-		String version = "FORGE VOTIFIER "+ForgeVotifier.VERSION+" "+session.getChallenge()+"\n";
+		String version = "VOTIFIER "+ForgeVotifier.VERSION+" "+session.getChallenge()+"\n";
 		ctx.writeAndFlush(Unpooled.copiedBuffer(version, StandardCharsets.UTF_8));
 	}
 }

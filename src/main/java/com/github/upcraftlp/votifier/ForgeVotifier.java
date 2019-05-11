@@ -153,5 +153,8 @@ public class ForgeVotifier {
     public void onServerStopping(FMLServerStoppingEvent event) {
         log.info("stopping votifier thread...");
         // networkListener.shutdown();
+        if (serverChannel != null)
+            serverChannel.close();
+        serverGroup.shutdownGracefully();
     }
 }
