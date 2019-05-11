@@ -10,8 +10,8 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 import com.github.upcraftlp.votifier.ForgeVotifier;
-import com.github.upcraftlp.votifier.api.Vote;
-import com.github.upcraftlp.votifier.api.VoteEvent;
+import com.github.upcraftlp.votifier.api.RawVote;
+import com.github.upcraftlp.votifier.api.RawVoteEvent;
 import com.github.upcraftlp.votifier.util.RSAUtil;
 
 import net.minecraftforge.common.MinecraftForge;
@@ -56,7 +56,7 @@ public class NetworkListenerThread extends Thread {
                                     String timestamp = lines.length >= 5 ? lines[4].trim() : Long.toString(System.nanoTime() / 1_000_000L);
                                     FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() -> { //ensure we are not handling the event on the network thread
                                         ForgeVotifier.getLogger().info("[{}] received vote from {} (service: {})", timestamp, username, service);
-                                        MinecraftForge.EVENT_BUS.post(new VoteEvent(new Vote(service, username, address, timestamp)));
+                                        MinecraftForge.EVENT_BUS.post(new RawVoteEvent(new RawVote(service, username, address, timestamp)));
                                     });
                                 }
                                 else {

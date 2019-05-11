@@ -3,7 +3,7 @@ package com.github.upcraftlp.votifier.net;
 import java.util.List;
 
 import com.github.upcraftlp.votifier.ForgeVotifier;
-import com.github.upcraftlp.votifier.api.Vote;
+import com.github.upcraftlp.votifier.api.RawVote;
 import com.github.upcraftlp.votifier.util.RSAUtil;
 
 import io.netty.buffer.ByteBuf;
@@ -43,7 +43,7 @@ public class VotifierProtocol1Decoder extends ByteToMessageDecoder {
 		String timeStamp = readString(block, position);
 		position += timeStamp.length()+1;
 
-		Vote vote = new Vote();
+		RawVote vote = new RawVote();
 		vote.setServiceName(serviceName);
 		vote.setUsername(username);
 		vote.setAddress(address);

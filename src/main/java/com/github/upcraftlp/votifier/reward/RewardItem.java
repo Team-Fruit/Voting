@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 import com.github.upcraftlp.votifier.ForgeVotifier;
+import com.github.upcraftlp.votifier.api.Vote;
 import com.github.upcraftlp.votifier.api.reward.Reward;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -20,11 +21,12 @@ public class RewardItem extends Reward {
     private final Supplier<ItemStack> itemStack;
     private final String nbtRaw;
 
-    public RewardItem(Supplier<Item> item, int count, @Nullable String nbtString) {
-        this(item, count, 0, nbtString);
+    public RewardItem(int voteCount, Supplier<Item> item, int count, @Nullable String nbtString) {
+        this(voteCount, item, count, 0, nbtString);
     }
 
-    public RewardItem(Supplier<Item> item, int count, int meta, @Nullable String nbtString) {
+    public RewardItem(int voteCount, Supplier<Item> item, int count, int meta, @Nullable String nbtString) {
+    	super(voteCount);
         itemStack = ()->new ItemStack(item.get(), count, meta);
         nbtRaw = nbtString;
     }
@@ -35,15 +37,17 @@ public class RewardItem extends Reward {
     }
 
     @Override
-    public void activate(MinecraftServer server, EntityPlayer player, String timestamp, String service, String address) {
+    public void activate(MinecraftServer server, EntityPlayer player, Vote vote) {
+        if (getVoteCount() > 0 && vote.getVoteCount() != getVoteCount())
+            return;
         try {
             ItemStack ret = itemStack.get().copy();
             if(ret.hasDisplayName()) {
-                ret.setStackDisplayName(replace(ret.getDisplayName(), player.getName(), service));
+                ret.setStackDisplayName(replace(ret.getDisplayName(), vote));
             }
             if(nbtRaw != null) {
                 try {
-                    NBTTagCompound nbt = JsonToNBT.getTagFromJson(replace(nbtRaw, player.getName(), service));
+                    NBTTagCompound nbt = JsonToNBT.getTagFromJson(replace(nbtRaw, vote));
                     ret.setTagCompound(nbt);
                 }
                 catch (NBTException e) {

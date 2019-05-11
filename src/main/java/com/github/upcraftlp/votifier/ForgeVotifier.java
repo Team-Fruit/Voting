@@ -2,6 +2,8 @@ package com.github.upcraftlp.votifier;
 
 import static com.github.upcraftlp.votifier.ForgeVotifier.*;
 
+import java.io.File;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -9,6 +11,7 @@ import com.github.upcraftlp.votifier.command.CommandVote;
 import com.github.upcraftlp.votifier.config.RewardParser;
 import com.github.upcraftlp.votifier.config.TokenParser;
 import com.github.upcraftlp.votifier.config.VotifierConfig;
+import com.github.upcraftlp.votifier.event.VoteEventHandler;
 import com.github.upcraftlp.votifier.net.VoteInboundHandler;
 import com.github.upcraftlp.votifier.net.VotifierGreetingHandler;
 import com.github.upcraftlp.votifier.net.VotifierProtocolDifferentiator;
@@ -73,7 +76,8 @@ public class ForgeVotifier {
                 com.github.upcraftlp.glasspane.util.ModUpdateHandler.registerMod(MODID);
             }
         }
-        RewardParser.init(event);
+        RewardParser.init(new File(event.getModConfigurationDirectory(), "votifier/rewards"), VoteEventHandler.AddReward, "default_rewards.json");
+        RewardParser.init(new File(event.getModConfigurationDirectory(), "votifier/milestones"), VoteEventHandler.AddMilestone, "default_milestones.json");
         TokenParser.init(event);
         if(isDebugMode()) {
             log.info("initiated vote listeners!");

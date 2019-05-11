@@ -6,7 +6,15 @@ public interface IRewardStore {
 
     int getMaxStoredRewards();
 
-    void storePlayerReward(Vote vote);
+    void storePlayerReward(String name, Vote vote);
 
     void claimRewards(String name);
+
+    int getVoteCount(String uuid);
+
+    int getLoginCount(String uuid);
+
+    void incrementLoginCount(String uuid);
+
+	void incrementVoteCount(String uuid);
 }

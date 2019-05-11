@@ -1,54 +1,26 @@
 package com.github.upcraftlp.votifier.api;
 
-public class Vote {
-	private String serviceName;
-	private String username;
-	private String address;
-	private String timeStamp;
+public class Vote extends RawVote {
+	private int voteCount;
 
-	public Vote(String serviceName, String username, String address, String timeStamp) {
-		this.serviceName = serviceName;
-		this.username = username;
-		this.address = address;
-		this.timeStamp = timeStamp;
+	public Vote(String serviceName, String username, String address, String timeStamp, int voteCount) {
+		super(serviceName, username, address, timeStamp);
+		this.voteCount = voteCount;
+	}
+
+	public Vote(RawVote rawVote, int voteCount) {
+		this(rawVote.getServiceName(), rawVote.getUsername(), rawVote.getAddress(), rawVote.getTimeStamp(), voteCount);
 	}
 
 	public Vote() {
+		this.voteCount = 0;
 	}
 
-	public String toString() {
-		return "Vote (from:"+this.serviceName+" username:"+this.username+" address:"+this.address+" timeStamp:"+this.timeStamp+")";
+	public void setVoteCount(int voteCount) {
+		this.voteCount = voteCount;
 	}
 
-	public void setServiceName(String serviceName) {
-		this.serviceName = serviceName;
-	}
-
-	public String getServiceName() {
-		return this.serviceName;
-	}
-
-	public void setUsername(String username) {
-		this.username = username.length()<=16 ? username : username.substring(0, 16);
-	}
-
-	public String getUsername() {
-		return this.username;
-	}
-
-	public void setAddress(String address) {
-		this.address = address;
-	}
-
-	public String getAddress() {
-		return this.address;
-	}
-
-	public void setTimeStamp(String timeStamp) {
-		this.timeStamp = timeStamp;
-	}
-
-	public String getTimeStamp() {
-		return this.timeStamp;
+	public int getVoteCount() {
+		return this.voteCount;
 	}
 }

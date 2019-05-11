@@ -8,7 +8,7 @@ import javax.crypto.Mac;
 import javax.xml.bind.DatatypeConverter;
 
 import com.github.upcraftlp.votifier.ForgeVotifier;
-import com.github.upcraftlp.votifier.api.Vote;
+import com.github.upcraftlp.votifier.api.RawVote;
 import com.github.upcraftlp.votifier.config.TokenParser;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -45,7 +45,7 @@ public class VotifierProtocol2VoteDecoder extends io.netty.handler.codec.Message
 			throw new RuntimeException("Signature is not valid (invalid token?)");
 		}
 
-		Vote vote = new Vote();
+		RawVote vote = new RawVote();
 		vote.setServiceName(votePayload.get("serviceName").getAsString());
 		vote.setUsername(votePayload.get("username").getAsString());
 		vote.setAddress(votePayload.get("address").getAsString());

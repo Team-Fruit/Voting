@@ -1,6 +1,7 @@
 package com.github.upcraftlp.votifier.reward;
 
 import com.github.upcraftlp.votifier.api.RewardException;
+import com.github.upcraftlp.votifier.api.Vote;
 import com.github.upcraftlp.votifier.api.reward.Reward;
 
 import net.minecraft.command.CommandException;
@@ -17,7 +18,8 @@ public class RewardChat extends Reward {
     private final String messageRaw;
     private boolean parseAsTellraw;
 
-    public RewardChat(String raw, boolean broadcastMessage, boolean parseAsTellraw) {
+    public RewardChat(int voteCount, String raw, boolean broadcastMessage, boolean parseAsTellraw) {
+        super(voteCount);
         this.broadcastMessage = broadcastMessage;
         this.messageRaw = raw;
         this.parseAsTellraw = parseAsTellraw;
@@ -29,8 +31,10 @@ public class RewardChat extends Reward {
     }
 
     @Override
-    public void activate(MinecraftServer server, EntityPlayer player, String timestamp, String service, String address) throws RewardException {
-        String msg = replace(messageRaw, player.getName(), service);
+    public void activate(MinecraftServer server, EntityPlayer player, Vote vote) throws RewardException {
+        if (getVoteCount() > 0 && vote.getVoteCount() != getVoteCount())
+            return;
+        String msg = replace(messageRaw, vote);
         if(this.parseAsTellraw) {
             try {
                 ITextComponent textComponent = ITextComponent.Serializer.jsonToComponent(msg);

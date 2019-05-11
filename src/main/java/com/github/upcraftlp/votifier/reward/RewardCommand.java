@@ -1,5 +1,6 @@
 package com.github.upcraftlp.votifier.reward;
 
+import com.github.upcraftlp.votifier.api.Vote;
 import com.github.upcraftlp.votifier.api.reward.Reward;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -9,7 +10,8 @@ public class RewardCommand extends Reward {
 
     private final String command;
 
-    public RewardCommand(String command) {
+    public RewardCommand(int voteCount, String command) {
+        super(voteCount);
         this.command = command;
     }
 
@@ -19,7 +21,9 @@ public class RewardCommand extends Reward {
     }
 
     @Override
-    public void activate(MinecraftServer server, EntityPlayer player, String timestamp, String service, String address) {
-        server.commandManager.executeCommand(server, replace(this.command, player.getName(), service));
+    public void activate(MinecraftServer server, EntityPlayer player, Vote vote) {
+        if (getVoteCount() > 0 && vote.getVoteCount() != getVoteCount())
+            return;
+        server.commandManager.executeCommand(server, replace(this.command, vote));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.upcraftlp.votifier.command;
 
+import com.github.upcraftlp.votifier.command.CommandVote.Level;
 import com.github.upcraftlp.votifier.config.VotifierConfig;
 import com.github.upcraftlp.votifier.reward.store.RewardStoreWorldSavedData;
 
@@ -19,6 +20,18 @@ public class CommandVoteGet extends CommandBase {
     @Override
     public String getUsage(ICommandSender sender) {
         return "/vote get";
+    }
+
+    public final Level level = Level.ALL;
+
+    @Override
+    public int getRequiredPermissionLevel() {
+        return level.requiredPermissionLevel;
+    }
+
+    @Override
+    public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
+        return level.permissionChecker.checkPermission(server, sender, this);
     }
 
     @Override

@@ -1,0 +1,9 @@
+{
+    "rewards": [
+        {
+            "type": "chat",
+            "message": "Hello §b@PLAYER@§r!\nToday is the @COUNT@ day of life!",
+            "broadcast": true
+        }
+    ]
+}

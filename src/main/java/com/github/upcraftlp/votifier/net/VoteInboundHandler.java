@@ -1,8 +1,8 @@
 package com.github.upcraftlp.votifier.net;
 
 import com.github.upcraftlp.votifier.ForgeVotifier;
-import com.github.upcraftlp.votifier.api.Vote;
-import com.github.upcraftlp.votifier.api.VoteEvent;
+import com.github.upcraftlp.votifier.api.RawVote;
+import com.github.upcraftlp.votifier.api.RawVoteEvent;
 import com.github.upcraftlp.votifier.net.VotifierSession.ProtocolVersion;
 import com.google.gson.JsonObject;
 
@@ -12,13 +12,12 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
-public class VoteInboundHandler extends SimpleChannelInboundHandler<Vote> {
-	protected void channelRead0(ChannelHandlerContext ctx, Vote vote) throws Exception {
+public class VoteInboundHandler extends SimpleChannelInboundHandler<RawVote> {
+	protected void channelRead0(ChannelHandlerContext ctx, RawVote vote) throws Exception {
 		//System.out.println(vote.getAddress()+" "+vote.getUsername());
 
 		FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() -> { //ensure we are not handling the event on the network thread
-			ForgeVotifier.getLogger().info("[{}] received vote from {} (service: {})", vote.getTimeStamp(), vote.getUsername(), vote.getServiceName());
-			MinecraftForge.EVENT_BUS.post(new VoteEvent(vote));
+			MinecraftForge.EVENT_BUS.post(new RawVoteEvent(vote));
 		});
 
 		VotifierSession session = (VotifierSession) ctx.channel().attr(VotifierSession.KEY).get();
