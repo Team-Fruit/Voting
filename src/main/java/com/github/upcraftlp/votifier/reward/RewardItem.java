@@ -1,5 +1,6 @@
 package com.github.upcraftlp.votifier.reward;
 
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
@@ -21,12 +22,12 @@ public class RewardItem extends Reward {
     private final Supplier<ItemStack> itemStack;
     private final String nbtRaw;
 
-    public RewardItem(int voteCount, Supplier<Item> item, int count, @Nullable String nbtString) {
-        this(voteCount, item, count, 0, nbtString);
+    public RewardItem(Predicate<Vote> predicate, Supplier<Item> item, int count, @Nullable String nbtString) {
+        this(predicate, item, count, 0, nbtString);
     }
 
-    public RewardItem(int voteCount, Supplier<Item> item, int count, int meta, @Nullable String nbtString) {
-    	super(voteCount);
+    public RewardItem(Predicate<Vote> predicate, Supplier<Item> item, int count, int meta, @Nullable String nbtString) {
+    	super(predicate);
         itemStack = ()->new ItemStack(item.get(), count, meta);
         nbtRaw = nbtString;
     }
@@ -38,7 +39,7 @@ public class RewardItem extends Reward {
 
     @Override
     public void activate(MinecraftServer server, EntityPlayer player, Vote vote) {
-        if (getVoteCount() > 0 && vote.getVoteCount() != getVoteCount())
+        if (!getPredicate().test(vote))
             return;
         try {
             ItemStack ret = itemStack.get().copy();

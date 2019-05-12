@@ -1,5 +1,7 @@
 package com.github.upcraftlp.votifier.reward;
 
+import java.util.function.Predicate;
+
 import com.github.upcraftlp.votifier.ForgeVotifier;
 import com.github.upcraftlp.votifier.api.Vote;
 import com.github.upcraftlp.votifier.api.reward.Reward;
@@ -13,8 +15,8 @@ public class RewardThutBalance extends Reward {
 
     private final int amount;
 
-    public RewardThutBalance(int voteCount, int amount) {
-        super(voteCount);
+    public RewardThutBalance(Predicate<Vote> predicate, int amount) {
+        super(predicate);
         this.amount = amount;
     }
 
@@ -25,7 +27,7 @@ public class RewardThutBalance extends Reward {
 
     @Override
     public void activate(MinecraftServer server, EntityPlayer player, Vote vote) {
-        if (getVoteCount() > 0 && vote.getVoteCount() != getVoteCount())
+        if (!getPredicate().test(vote))
             return;
         if(ForgeVotifier.isThutessentialsLoaded()) {
             EconomyManager.addBalance(player, this.amount);

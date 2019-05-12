@@ -1,5 +1,7 @@
 package com.github.upcraftlp.votifier.reward;
 
+import java.util.function.Predicate;
+
 import com.github.upcraftlp.votifier.api.RewardException;
 import com.github.upcraftlp.votifier.api.Vote;
 import com.github.upcraftlp.votifier.api.reward.Reward;
@@ -18,8 +20,8 @@ public class RewardChat extends Reward {
     private final String messageRaw;
     private boolean parseAsTellraw;
 
-    public RewardChat(int voteCount, String raw, boolean broadcastMessage, boolean parseAsTellraw) {
-        super(voteCount);
+    public RewardChat(Predicate<Vote> predicate, String raw, boolean broadcastMessage, boolean parseAsTellraw) {
+        super(predicate);
         this.broadcastMessage = broadcastMessage;
         this.messageRaw = raw;
         this.parseAsTellraw = parseAsTellraw;
@@ -32,7 +34,7 @@ public class RewardChat extends Reward {
 
     @Override
     public void activate(MinecraftServer server, EntityPlayer player, Vote vote) throws RewardException {
-        if (getVoteCount() > 0 && vote.getVoteCount() != getVoteCount())
+        if (!getPredicate().test(vote))
             return;
         String msg = replace(messageRaw, vote);
         if(this.parseAsTellraw) {

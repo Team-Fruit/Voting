@@ -208,7 +208,7 @@ public class RewardStoreWorldSavedData extends WorldSavedData implements IReward
 		long dayTimesMillis = TimeUnit.HOURS.toMillis(9);
 		long nowDate = TimeUnit.MILLISECONDS.toDays(now - dayTimesMillis);
 		long lastDate = TimeUnit.MILLISECONDS.toDays(milestone.milestone.getLastLogin() - dayTimesMillis);
-		if (nowDate - lastDate > 0) {
+		if (nowDate - lastDate != 0) {
 			Milestone newMilestone = new Milestone(milestone.milestone.getVoteCount(), milestone.milestone.getLoginCount()+1, now);
 			MilestoneEvent event = new MilestoneEvent(uuid, milestone.milestone, newMilestone);
 			MinecraftForge.EVENT_BUS.post(event);

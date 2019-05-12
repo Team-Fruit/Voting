@@ -1,5 +1,7 @@
 package com.github.upcraftlp.votifier.reward;
 
+import java.util.function.Predicate;
+
 import com.github.upcraftlp.votifier.api.Vote;
 import com.github.upcraftlp.votifier.api.reward.Reward;
 
@@ -10,8 +12,8 @@ public class RewardCommand extends Reward {
 
     private final String command;
 
-    public RewardCommand(int voteCount, String command) {
-        super(voteCount);
+    public RewardCommand(Predicate<Vote> predicate, String command) {
+        super(predicate);
         this.command = command;
     }
 
@@ -22,7 +24,7 @@ public class RewardCommand extends Reward {
 
     @Override
     public void activate(MinecraftServer server, EntityPlayer player, Vote vote) {
-        if (getVoteCount() > 0 && vote.getVoteCount() != getVoteCount())
+        if (!getPredicate().test(vote))
             return;
         server.commandManager.executeCommand(server, replace(this.command, vote));
     }
