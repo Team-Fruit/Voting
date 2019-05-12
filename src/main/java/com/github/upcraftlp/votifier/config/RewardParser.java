@@ -7,9 +7,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.function.Supplier;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jline.utils.Log;
 
 import com.github.upcraftlp.votifier.ForgeVotifier;
 import com.github.upcraftlp.votifier.api.RewardCreatedEvent;
@@ -44,6 +47,7 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.NumberInvalidException;
 import net.minecraft.item.Item;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.StringUtils;
 import net.minecraftforge.common.MinecraftForge;
 
 public class RewardParser {
@@ -106,25 +110,39 @@ public class RewardParser {
             String timeformat = object.get("timeformat").getAsString();
             int timemask = object.get("timemask").getAsInt();
             SimpleDateFormat inputFormat = new SimpleDateFormat(timeformat);
-            Date time1d;
+            Date time1d = null;
             try {
                 time1d = inputFormat.parse(time);
             } catch (ParseException e) {
-                throw new IllegalArgumentException("Parse Error", e);
+                ForgeVotifier.getLogger().error("Parse Error", e);
             }
-            ZonedDateTime time1 = ZonedDateTime.ofInstant(time1d.toInstant(), ZoneId.systemDefault());
-            predicate = predicate.and(vote -> {
-                ZonedDateTime time2 = ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(vote.getTimeStamp()) * 1000), ZoneId.systemDefault());
-                //ZonedDateTime time2 = ZonedDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis()), ZoneId.systemDefault());
-                return
-                        ((timemask & 0b1000000 /* 64 */) == 0 || time1.getYear() == time2.getYear()) &&
-                        ((timemask & 0b0100000 /* 32 */) == 0 || time1.getMonth() == time2.getMonth()) &&
-                        ((timemask & 0b0010000 /* 16 */) == 0 || time1.getDayOfMonth() == time2.getDayOfMonth()) &&
-                        ((timemask & 0b0001000 /* 8  */) == 0 || time1.getDayOfWeek() == time2.getDayOfWeek()) &&
-                        ((timemask & 0b0000100 /* 4  */) == 0 || time1.getHour() == time2.getHour()) &&
-                        ((timemask & 0b0000010 /* 2  */) == 0 || time1.getMinute() == time2.getMinute()) &&
-                        ((timemask & 0b0000001 /* 1  */) == 0 || time1.getSecond() == time2.getSecond());
-            });
+            if (time1d != null) {
+                ZonedDateTime time1 = ZonedDateTime.ofInstant(time1d.toInstant(), ZoneId.systemDefault());
+                predicate = predicate.and(vote -> {
+                    if (StringUtils.isNullOrEmpty(vote.getTimeStamp()))
+                        return false;
+                    ZonedDateTime time2 = null;
+                    try {
+                        // 2019-05-12 21:05:37 +0900
+                        LocalDateTime time3 = LocalDateTime.parse(vote.getTimeStamp(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss xxxx"));
+                        //Instant instant = Instant.parse(vote.getTimeStamp());
+                        time2 = ZonedDateTime.of(time3, ZoneId.systemDefault());
+                    } catch (DateTimeParseException e) {
+                        Log.warn("Timestamp Parse Exception", e);
+                    }
+                    if (time2 == null)
+                        return false;
+                    //ZonedDateTime time2 = ZonedDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis()), ZoneId.systemDefault());
+                    return
+                            ((timemask & 0b1000000 /* 64 */) == 0 || time1.getYear() == time2.getYear()) &&
+                            ((timemask & 0b0100000 /* 32 */) == 0 || time1.getMonth() == time2.getMonth()) &&
+                            ((timemask & 0b0010000 /* 16 */) == 0 || time1.getDayOfMonth() == time2.getDayOfMonth()) &&
+                            ((timemask & 0b0001000 /* 8  */) == 0 || time1.getDayOfWeek() == time2.getDayOfWeek()) &&
+                            ((timemask & 0b0000100 /* 4  */) == 0 || time1.getHour() == time2.getHour()) &&
+                            ((timemask & 0b0000010 /* 2  */) == 0 || time1.getMinute() == time2.getMinute()) &&
+                            ((timemask & 0b0000001 /* 1  */) == 0 || time1.getSecond() == time2.getSecond());
+                });
+            }
         }
 
         Reward reward;
