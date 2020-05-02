@@ -1,5 +1,6 @@
 package com.github.upcraftlp.votifier.net;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import com.github.upcraftlp.votifier.ForgeVotifier;
@@ -12,58 +13,46 @@ import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.CorruptedFrameException;
 
 public class VotifierProtocol1Decoder extends ByteToMessageDecoder {
-	protected void decode(ChannelHandlerContext ctx, ByteBuf buf, List<Object> list) throws Exception {
-		int readable = buf.readableBytes();
-
-		if (readable<256) {
+	@Override
+	protected void decode(ChannelHandlerContext ctx, ByteBuf buf, List<Object> list) {
+		if (buf.readableBytes() < 256) {
 			return;
 		}
 
-		byte[] block = new byte[256];
+		byte[] block = new byte[buf.readableBytes()];
 		buf.getBytes(0, block);
+		// "Drain" the whole buffer
+		buf.readerIndex(buf.readableBytes());
+
 		try {
 			block = RSAUtil.decrypt(block, RSAUtil.getKeyPair().getPrivate());
 		} catch (Exception e) {
-			throw new CorruptedFrameException("Could not decrypt data", e);
+			throw new CorruptedFrameException("Could not decrypt data (is your key correct?)", e);
 		}
-		int position = 0;
 
-		String opcode = readString(block, position);
-		position += opcode.length()+1;
-		if (!opcode.equals("VOTE")) {
+		// Parse the string we received.
+		String all = new String(block, StandardCharsets.UTF_8);
+		String[] split = all.split("\n");
+		if (split.length < 5) {
+			throw new CorruptedFrameException("Not enough fields specified in vote.");
+		}
+
+		if (!split[0].equals("VOTE")) {
 			throw new CorruptedFrameException("VOTE opcode not found");
 		}
 
-		String serviceName = readString(block, position);
-		position += serviceName.length()+1;
-		String username = readString(block, position);
-		position += username.length()+1;
-		String address = readString(block, position);
-		position += address.length()+1;
-		String timeStamp = readString(block, position);
-		position += timeStamp.length()+1;
-
-		RawVote vote = new RawVote();
-		vote.setServiceName(serviceName);
-		vote.setUsername(username);
-		vote.setAddress(address);
-		vote.setTimeStamp(timeStamp);
+		// Create the vote.
+		RawVote vote = new RawVote(split[1], split[2], split[3], split[4]);
 
 		if (ForgeVotifier.isDebugMode()) {
 			ForgeVotifier.getLogger().info("Received protocol v1 vote record -> "+vote);
 		}
+
 		list.add(vote);
 
+		// We are done, remove ourselves. Why? Sometimes, we will decode multiple vote messages.
+		// Netty doesn't like this, so we must remove ourselves from the pipeline. With Protocol 1,
+		// ending votes is a "fire and forget" operation, so this is safe.
 		ctx.pipeline().remove(this);
-	}
-
-	private static String readString(byte[] data, int offset) {
-		StringBuilder builder = new StringBuilder();
-		for (int i = offset; i<data.length; i++) {
-			if (data[i]==10)
-				break;
-			builder.append((char) data[i]);
-		}
-		return builder.toString();
 	}
 }

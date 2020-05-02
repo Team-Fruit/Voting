@@ -16,8 +16,10 @@ public class VotifierProtocolDifferentiator extends ByteToMessageDecoder {
 
 	protected void decode(ChannelHandlerContext ctx, ByteBuf buf, List<Object> list) throws Exception {
 		int readable = buf.readableBytes();
-		buf.retain();
-		buf.readerIndex(0);
+		if (readable < 2) {
+			// Some retarded voting sites (PMC?) seem to send empty buffers for no good reason.
+			return;
+		}
 		short readMagic = buf.readShort();
 
 		buf.readerIndex(0);
@@ -25,15 +27,15 @@ public class VotifierProtocolDifferentiator extends ByteToMessageDecoder {
 		VotifierSession session = (VotifierSession) ctx.channel().attr(VotifierSession.KEY).get();
 
 		if (readMagic==PROTOCOL_2_MAGIC) {
+			session.setVersion(VotifierSession.ProtocolVersion.TWO);
 			ctx.pipeline().addAfter("protocolDifferentiator", "protocol2LengthDecoder", new LengthFieldBasedFrameDecoder(1024, 2, 2, 0, 4));
 			ctx.pipeline().addAfter("protocol2LengthDecoder", "protocol2StringDecoder", new StringDecoder(StandardCharsets.UTF_8));
 			ctx.pipeline().addAfter("protocol2StringDecoder", "protocol2VoteDecoder", new VotifierProtocol2VoteDecoder());
 			ctx.pipeline().addAfter("protocol2VoteDecoder", "protocol2StringEncoder", new StringEncoder(StandardCharsets.UTF_8));
-			session.setVersion(VotifierSession.ProtocolVersion.TWO);
 			ctx.pipeline().remove(this);
 		} else if (readable==256) {
-			ctx.pipeline().addAfter("protocolDifferentiator", "protocol1Handler", new VotifierProtocol1Decoder());
 			session.setVersion(VotifierSession.ProtocolVersion.ONE);
+			ctx.pipeline().addAfter("protocolDifferentiator", "protocol1Handler", new VotifierProtocol1Decoder());
 			ctx.pipeline().remove(this);
 		} else {
 			throw new CorruptedFrameException("Unrecognized protocol (missing 0x733A header or 256-byte v1 block)");
